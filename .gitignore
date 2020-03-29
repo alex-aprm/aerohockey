@@ -1,0 +1,12 @@
+# Git
+*.orig
+
+# IDE files
+.idea
+
+# Files and directories created by pub
+.packages
+.dart_tools
+.pub/
+build/
+pubspec.lock
