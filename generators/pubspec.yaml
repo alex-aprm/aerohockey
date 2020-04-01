@@ -1,0 +1,9 @@
+name: generators
+description: Metadata generators part for aerohockey.shared
+
+environment:
+  sdk: ">=1.22.0 <2.0.0"
+
+dependencies:
+  uuid: any
+  source_gen: any
