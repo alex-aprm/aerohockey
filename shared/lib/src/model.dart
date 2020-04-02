@@ -13,7 +13,7 @@ abstract class Model {
   Map toMap() {
     return new Map.fromIterable(properties, key: (p) => p.name, value: (ModelProperty p) {
       var value = p.get(this);
-      if (p.type == 'string' || p.type == 'int')
+      if (p.type == 'String' || p.type == 'int')
         return value;
       if (p.type == 'DateTime')
         return value?.toUtc()?.toIso8601String();
@@ -25,12 +25,12 @@ abstract class Model {
   void fromMap(Map map) {
     for(var p in properties) {
       var value = map[p.name];
-      if (p.type == 'string' || p.type == 'int')
+      if (p.type == 'String' || p.type == 'int')
         p.set(this, value);
       if (p.type == 'DateTime')
         p.set(this, parseDateTime(value));
       if (value is Map)
-        p.set(this, ModelConstructors[p.type]().fromMap(value));
+        p.set(this, ModelConstructors[p.type]()..fromMap(value));
     }
   }
 

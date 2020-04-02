@@ -11,8 +11,10 @@ void main() {
             new Player()..checkId()..name = 'Test');
 
     var m = game.toMap();
-    expect(m['id'], game.id);
-    expect(m['blueSide']['id'], game.blueSide.id);
-    expect(m['blueSide']['name'], game.blueSide.name);
+    var game1 = new Game()..fromMap(m);
+
+    expect(game1.id, game.id);
+    expect(game1.blueSide.id, game.blueSide.id);
+    expect(game1.blueSide.name, game.blueSide.name);
   });
 }
