@@ -1,9 +1,5 @@
 part of generators;
 
-class AutoProperties {
-  const AutoProperties();
-}
-
 class PropertyGenerator extends GeneratorForAnnotation<AutoProperties> {
   const PropertyGenerator();
 

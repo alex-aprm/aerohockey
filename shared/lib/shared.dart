@@ -1,7 +1,7 @@
 library shared;
 
+import 'dart:convert';
 import 'package:uuid/uuid.dart';
-import 'package:generators/generators.dart';
 
 part 'src/model.dart';
 part 'src/game.dart';

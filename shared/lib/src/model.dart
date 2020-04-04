@@ -1,4 +1,5 @@
 part of shared;
+
 typedef dynamic PropertyGetter(Model m);
 typedef PropertySetter(Model m, dynamic v);
 typedef Model ModelConstructor();
@@ -9,6 +10,10 @@ abstract class Model {
   void checkId() {
     id ??= new Uuid().v1();
   }
+
+  Map<String, String> toJson() => toMap();
+
+  void fromJson(String json) => fromMap(JSON.decode(json));
 
   Map toMap() {
     return new Map.fromIterable(properties, key: (p) => p.name, value: (ModelProperty p) {
@@ -51,4 +56,8 @@ class ModelProperty {
   String type;
   PropertyGetter get;
   PropertySetter set;
+}
+
+class AutoProperties {
+  const AutoProperties();
 }

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:test/test.dart';
 import 'package:shared/shared.dart';
 
@@ -16,5 +17,8 @@ void main() {
     expect(game1.id, game.id);
     expect(game1.blueSide.id, game.blueSide.id);
     expect(game1.blueSide.name, game.blueSide.name);
+
+    var s = JSON.encode(game);
+    print(s);
   });
 }
