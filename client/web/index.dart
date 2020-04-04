@@ -1,5 +1,5 @@
-import 'dart:html';
+import 'package:client/app.dart';
+
 void main() {
-  document.body.children.clear();
-  document.body.append(new HeadingElement.h1()..text = 'Hello world');
+  new Application().init();
 }
