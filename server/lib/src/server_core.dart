@@ -31,7 +31,7 @@ class Server {
     route.get('/test', getTestGame);
   }
 
-  getTestGame() async {
+  Future<Game> getTestGame() async {
     var game = new Game();
     game.redScore = 1;
     game.blueScore = 2;

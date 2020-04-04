@@ -7,3 +7,5 @@ environment:
 dependencies:
   uuid: any
   source_gen: any
+  shared:
+    path: ../shared
