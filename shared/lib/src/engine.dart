@@ -1,7 +1,7 @@
 part of shared;
 
 class Engine {
-  double friction = 0.4;
+  double friction = 0.001;
 
   double frame = 1000000.0;
 
@@ -30,8 +30,7 @@ class Engine {
   }
 
   Future processTick() async {
-    if (stopwatch == null)
-      return;
+    if (stopwatch == null) return;
 
     var elapsedTotal = stopwatch.elapsedMicroseconds;
     var elapsedTicks = elapsedTotal - lastProcessedTick;
@@ -45,58 +44,57 @@ class Engine {
 }
 
 class Puck {
-
   void process(int elapsedTicks, Engine engine) {
     var field = engine.field;
     double newX = x + speedX * elapsedTicks / engine.frame;
     double newY = y + speedY * elapsedTicks / engine.frame;
     phi += spin * elapsedTicks / engine.frame;
 
-    while (phi < 0 )
-      phi += 2* math.PI;
-    while (phi >= 2* math.PI )
-      phi -= 2* math.PI;
+    while (phi < 0) phi += 2 * math.PI;
+    while (phi >= 2 * math.PI) phi -= 2 * math.PI;
 
     if (speedX < 0) {
       if (newX - radius <= field.border) {
-        newX += 2*(field.border - (newX - radius));
-        speedX = - speedX;
-        speedY +=  speed * spin * elapsedTicks / engine.frame;
+        newX += 2 * (field.border - (newX - radius));
+        speedX = -speedX;
+        speedY += speed * spin * elapsedTicks / engine.frame;
       }
     }
 
     if (speedX > 0) {
       if (newX + radius >= field.width - field.border) {
-        newX -= 2*((newX + radius) - (field.width - field.border));
-        speedX = - speedX;
-        speedY -=  speed* spin * elapsedTicks / engine.frame;
+        newX -= 2 * ((newX + radius) - (field.width - field.border));
+        speedX = -speedX;
+        speedY -= speed * spin * elapsedTicks / engine.frame;
       }
     }
 
     if (speedY < 0) {
       if (newY - radius <= field.border) {
-        newY += 2*(field.border - (newY - radius));
-        speedY = - speedY;
+        newY += 2 * (field.border - (newY - radius));
+        speedY = -speedY;
         speedX -= speed * spin * elapsedTicks / engine.frame;
       }
     }
 
     if (speedY > 0) {
       if (newY + radius >= field.height - field.border) {
-        newY -= 2*((newY + radius) - (field.height - field.border));
-        speedY = - speedY;
-        speedX +=  speed * spin * elapsedTicks / engine.frame;
+        newY -= 2 * ((newY + radius) - (field.height - field.border));
+        speedY = -speedY;
+        speedX += speed * spin * elapsedTicks / engine.frame;
       }
     }
 
     if (speed > 0) {
-      var newSpeed = (speed - 2000 * engine.friction * elapsedTicks / engine.frame).clamp(0, double.INFINITY);
+      var newSpeed = (speed - speed * speed * engine.friction * elapsedTicks / engine.frame).clamp(0, double.INFINITY);
       speedX = speedX * newSpeed / speed;
       speedY = speedY * newSpeed / speed;
     }
 
     if (spin != 0)
-      spin = (spin.abs() - 20*engine.friction * elapsedTicks / engine.frame).clamp(0, double.INFINITY) * spin.abs() / spin;
+      spin = (spin.abs() - 100 * (spin * spin) * engine.friction * elapsedTicks / engine.frame).clamp(0, double.INFINITY) *
+          spin.abs() /
+          spin;
 
     x = newX;
     y = newY;
@@ -116,56 +114,79 @@ class Puck {
 
   double weight;
   double size;
+
   double get radius => size / 2;
+
+  double get angle  {
+    if (speedY <= 0)
+      return math.acos(speedX / speed);
+    else
+      return  math.PI + math.acos(- speedX / speed);
+  }
 
   Puck(this.size, this.weight, this.x, this.y);
 }
 
-
 class PlayerPuck extends Puck {
-  PlayerPuck(double size, double weight, this.desiredX, this.desiredY): super(size, weight, desiredX, desiredY);
+  PlayerPuck(double size, double weight, this.desiredX, this.desiredY) : super(size, weight, desiredX, desiredY);
 
   double desiredX;
   double desiredY;
+  double actualSpeed;
+  bool collision = false;
 
   void process(int elapsedTicks, Engine engine) {
     desiredX = desiredX.clamp(engine.field.border + radius, engine.field.width - engine.field.border - radius);
     desiredY = desiredY.clamp(engine.field.border + radius, engine.field.height - engine.field.border - radius);
-    if (desiredX != x)
-      speedX = (desiredX - x) * 100;
-    if (desiredY != y)
-      speedY = (desiredY - y) * 100;
-
+    if (desiredX != x) speedX = (desiredX - x) * 100;
+    if (desiredY != y) speedY = (desiredY - y) * 100;
 
     var newX = x + speedX * elapsedTicks / engine.frame;
     var newY = y + speedY * elapsedTicks / engine.frame;
 
+    collision = false;
     var puck = engine.puck;
     var distance = math.sqrt((puck.x - newX) * (puck.x - newX) + (puck.y - newY) * (puck.y - newY));
-    if (distance <= radius + puck.radius) {
-      var imp = (impulse > puck.impulse ? impulse : puck.impulse).clamp(0, 100000);
-      var newPuckSpeed = engine.friction * imp / puck.weight;
-      puck.speedX = puck.x - newX;
-      puck.speedY = puck.y - newY;
-      var sx = puck.speedX / puck.speed;
-      var sy = puck.speedY / puck.speed;
+    if (distance < radius + puck.radius) {
+      collision = true;
+      var newPuckSpeed = engine.friction * (puck.speed) + actualSpeed ;
+      var sx = puck.x - newX;
+      var sy = puck.y - newY;
+      var s = math.sqrt(sx * sx + sy * sy);
+      sx = sx / s;
+      sy = sy / s;
 
       puck.speedX = sx * newPuckSpeed;
       puck.speedY = sy * newPuckSpeed;
 
-      var angle = math.acos(speedX/speed) - math.acos(puck.speedX/puck.speed);
+      if (actualSpeed > 0) {
+        var angle = this.angle - puck.angle;
+        puck.spin = angle * actualSpeed * elapsedTicks / engine.frame;
+      }
 
-      puck.spin = angle*puck.speed/50;
+      var vx = newX - puck.x;
+      var vy = newY - puck.y;
 
-    }
-    else{
+      puck.x += (newX - x);
+      puck.y += (newY - y);
+      puck.x = puck.x.clamp(engine.field.border + puck.radius, engine.field.width - engine.field.border - puck.radius);
+      puck.y = puck.y.clamp(engine.field.border + puck.radius, engine.field.height - engine.field.border - puck.radius);
+
+
+
+      vx = vx / distance * (radius + puck.radius - distance);
+      vy = vy / distance * (radius + puck.radius - distance);
+      newX += vx;
+      newY += vy;
       x = newX;
       y = newY;
+
     }
 
+    actualSpeed = math.sqrt((newX - x) * (newX - x) + (newY - y) * (newY - y)) * engine.frame / elapsedTicks;
+    x = newX;
+    y = newY;
   }
-
-
 }
 
 class Field {

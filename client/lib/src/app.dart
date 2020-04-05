@@ -6,7 +6,6 @@ class Application {
 
   SpanElement debug = new SpanElement();
   Future init() async {
-    api.getClient = () => new BrowserClient();
     document.body.children.clear();
     var engine = new Engine();
     engine.start();
@@ -20,9 +19,9 @@ class Application {
     var rnd = new math.Random();
     var btn = new ButtonElement()..text = 'BOOM';
     btn.onClick.listen((_) {
-      engine.puck.speedX = rnd.nextInt(2000)-1000;
-      engine.puck.speedY = rnd.nextInt(2000)-100;
-      engine.puck.spin = rnd.nextDouble()*40 - 20;
+      engine.puck.speedX = 700;//rnd.nextInt(2000)-1000;
+      engine.puck.speedY = 0;//rnd.nextInt(2000)-100;
+      engine.puck.spin = 0;//rnd.nextDouble()*40 - 20;
     });
     document.body.append(field);
     document.body.append(btn);
@@ -31,7 +30,7 @@ class Application {
   }
 
   Future drawField(Engine engine) async {
-    debug.text = 'sx = ${engine.puck.spin}';
+    debug.text = 'a = ${engine.bluePlayer.actualSpeed}';
     var ctx = field.context2D;
     ctx.setFillColorRgb(255, 255, 255);
     ctx.fillRect(0,0, engine.field.width, engine.field.height);
