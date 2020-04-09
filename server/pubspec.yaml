@@ -5,6 +5,8 @@ environment:
   sdk: ">=1.22.0 <2.0.0"
 
 dependencies:
+  uuid: any
+  postgresql2: any
   shelf: any
   shelf_bind: any
   shelf_rest: any
