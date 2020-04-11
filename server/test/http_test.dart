@@ -5,7 +5,6 @@ import 'package:server/server.dart';
 import 'package:shared/api.dart' as api;
 
 void main() {
-
   Server server;
 
   setUpAll(() async {

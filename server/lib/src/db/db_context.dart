@@ -36,6 +36,9 @@ class DbContext {
     }
   }
 
+  DbRepository<Player> get players => new DbRepository<Player>(this);
+  DbRepository<Game> get games => new DbRepository<Game>(this);
+
   Future<Map<String, List<dynamic>>> sql(String sql, Map params) => driver.sql(connection.id, sql, params);
 }
 

@@ -1,12 +1,24 @@
 import 'dart:async';
 import 'package:test/test.dart';
 import 'package:server/server.dart';
+import 'package:shared/shared.dart';
 
 void main() {
   DbContext db;
 
   setUpAll(() async {
     db = new DbContext(new PostgresDriver('localhost', 'postgres', 'postgres', 'postgres'));
+  });
+
+  test('driver test', () async {
+    DbDriver driver = new PostgresDriver('localhost', 'postgres', 'postgres', 'postgres');
+
+
+    var c1 = new DbConnectionInfo();
+    var c2 = new DbConnectionInfo();
+    await driver.connect(c1);
+    var data = await driver.sql(c1.id, 'select 1 as a', {});
+    print(data);
   });
 
   test('select 1 test', () async {
@@ -60,6 +72,35 @@ void main() {
     });
 
     await new Future.delayed(new Duration(seconds: 6));
+  });
+
+  test('save test', () async {
+    await db.games.createTable();
+
+    var game = new Game()
+      ..checkId()
+      ..started = new DateTime.now()
+      ..blueScore = 1
+      ..blueSide = (new Player()
+        ..name = 'John'
+        ..winsCount = 10
+        ..losesCount = 0
+        ..checkId());
+
+    await db.games.save(game);
+    var games = await db.games.get();
+    for(var g in games)
+      await db.games.delete(g);
+
+    game.blueScore = 2;
+    game.id = null;
+    game.checkId();
+    await db.games.save(game);
+    var g1 = await db.games.find(game.id);
+    expect(g1.id, game.id);
+
+    var g2 = await db.games.find((new Game()..checkId()).id);
+    expect(g2, null);
   });
 
 }

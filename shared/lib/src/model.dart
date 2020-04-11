@@ -46,17 +46,48 @@ abstract class Model {
   }
 
   Iterable<ModelProperty> properties;
+
+  static String pluralize(String s) {
+    if (s[s.length - 1] == 'y')
+      return s.substring(0, s.length - 1) + 'ies';
+    else
+      return s + 's';
+  }
+
+  static String camelToSnake(String str) => _fromCamel(str, '_');
+
+  static String _fromCamel(String str, String separator) {
+    if (str == null || str.length < 2) {
+      return str;
+    }
+    int start = 0;
+    final segments = <String>[];
+    for (int i = 0; i < str.length; i++) {
+      final char = str.substring(i, i + 1);
+      final isUpper = char.toUpperCase() == char && char.toLowerCase() != char;
+      if (isUpper) {
+        segments.add(str.substring(start, i));
+        start = i;
+      }
+    }
+    segments.add(str.substring(start, str.length));
+    return segments.map((s) => s.toLowerCase()).where((s) => s.isNotEmpty).join(separator);
+  }
+
 }
 
 class ModelProperty {
 
-  ModelProperty(this.type, this.name, this.get, this.set);
+  ModelProperty(this.type, this.name, this.get, this.set) {
+    fieldName = Model.camelToSnake(ModelConstructors.containsKey(type) ? '${name}Id' : name);
+  }
 
   String name;
+  String fieldName;
   String type;
   PropertyGetter get;
   PropertySetter set;
-}
+  }
 
 class AutoProperties {
   const AutoProperties();

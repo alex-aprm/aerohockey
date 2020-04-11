@@ -12,5 +12,6 @@ import 'package:postgresql2/pool.dart' as pgpool;
 
 part 'src/server_core.dart';
 part 'src/db/db_context.dart';
+part 'src/db/repository.dart';
 part 'src/db/db_driver.dart';
 part 'src/db/postgresql_driver.dart';
