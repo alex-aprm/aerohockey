@@ -38,7 +38,7 @@ class DbRepository<M extends Model> {
       else if (property.type == 'DateTime')
         s += ' timestamp without time zone';
       else if (ModelConstructors.containsKey(property.type)) {
-        s += ' uuid';
+        s += ' uuid references ${Model.pluralize(Model.camelToSnake(property.type))}(id)';
       }
       return s;
     }
@@ -65,8 +65,8 @@ class DbQuery<M extends Model> {
   DbQuery(this.db, this.type, this.table, this.instance);
 
   DbQuery where(String whereString, Map whereParams) {
-    whereString = whereString;
-    whereParams = whereParams;
+    this.whereString = whereString;
+    this.whereParams = whereParams;
     return this;
   }
 

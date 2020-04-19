@@ -8,7 +8,8 @@ part of shared;
 
 Map<String, ModelConstructor> ModelConstructors = {
   "Game": () => new Game(),
-  "Player": () => new Player()
+  "Player": () => new Player(),
+  "Session": () => new Session()
 };
 
 class $Game {
@@ -40,6 +41,17 @@ class $Player {
         (model, value) => model.winsCount = value),
     new ModelProperty("int", "losesCount", (model) => model.losesCount,
         (model, value) => model.losesCount = value),
+    new ModelProperty("String", "id", (model) => model.id,
+        (model, value) => model.id = value),
+  ];
+}
+
+class $Session {
+  List<ModelProperty> properties = [
+    new ModelProperty("String", "token", (model) => model.token,
+        (model, value) => model.token = value),
+    new ModelProperty("Player", "player", (model) => model.player,
+        (model, value) => model.player = value),
     new ModelProperty("String", "id", (model) => model.id,
         (model, value) => model.id = value),
   ];

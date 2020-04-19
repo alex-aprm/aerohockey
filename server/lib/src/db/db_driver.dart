@@ -39,3 +39,17 @@ abstract class DbDriver {
   Future<Map<String, List<dynamic>>> sql(String id, String sql, Map params);
 
 }
+
+class DbConnectionInfo {
+  String id;
+
+  bool get connected => openCount > 0;
+  bool get transaction => tranCount > 0;
+
+  int openCount = 0;
+  int tranCount = 0;
+
+  DbConnectionInfo() {
+    id = new Uuid().v1();
+  }
+}

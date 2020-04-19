@@ -17,6 +17,7 @@ void main() {
     var c1 = new DbConnectionInfo();
     var c2 = new DbConnectionInfo();
     await driver.connect(c1);
+    await driver.connect(c2);
     var data = await driver.sql(c1.id, 'select 1 as a', {});
     print(data);
   });
@@ -75,6 +76,7 @@ void main() {
   });
 
   test('save test', () async {
+    await db.players.createTable();
     await db.games.createTable();
 
     var game = new Game()
@@ -87,6 +89,7 @@ void main() {
         ..losesCount = 0
         ..checkId());
 
+    await db.players.save(game.blueSide);
     await db.games.save(game);
     var games = await db.games.get();
     for(var g in games)

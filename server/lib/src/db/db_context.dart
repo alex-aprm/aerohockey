@@ -38,20 +38,7 @@ class DbContext {
 
   DbRepository<Player> get players => new DbRepository<Player>(this);
   DbRepository<Game> get games => new DbRepository<Game>(this);
+  DbRepository<Session> get sessions => new DbRepository<Session>(this);
 
   Future<Map<String, List<dynamic>>> sql(String sql, Map params) => driver.sql(connection.id, sql, params);
-}
-
-class DbConnectionInfo {
-  String id;
-
-  bool get connected => openCount > 0;
-  bool get transaction => tranCount > 0;
-
-  int openCount = 0;
-  int tranCount = 0;
-
-  DbConnectionInfo() {
-    id = new Uuid().v1();
-  }
 }

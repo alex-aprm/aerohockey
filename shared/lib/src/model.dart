@@ -74,6 +74,16 @@ abstract class Model {
     return segments.map((s) => s.toLowerCase()).where((s) => s.isNotEmpty).join(separator);
   }
 
+  static String randomString(int length) {
+    var chars="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890";
+    var rand = new math.Random();
+    var lst = new List.generate(
+        length,
+            (index) {
+          return chars[rand.nextInt(chars.length)];
+        });
+    return lst.join();
+  }
 }
 
 class ModelProperty {
