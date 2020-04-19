@@ -1,6 +1,7 @@
 part of api;
 
 String root;
+String get wsRoot => root.replaceAll('http://','ws://').replaceAll('https://', 'wss://');
 
 GameClient get game => new GameClient();
 

@@ -21,4 +21,12 @@ void main() {
     var s = JSON.encode(game);
     print(s);
   });
+
+  test('engine serialization test' , () {
+   var engine = new Engine();
+   engine.init();
+   var s = engine.toString();
+   engine.fromString(s);
+  });
+
 }

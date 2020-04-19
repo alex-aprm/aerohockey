@@ -13,15 +13,29 @@ class Engine {
   Puck puck;
   Field field = new Field();
 
+  String toString() => '${puck.toString()} ${bluePlayer.toString()} ${redPlayer.toString()}';
+
+  int fromString(String s) {
+    var data = s.split(' ').map((c) => double.parse(c)).toList();
+    var c = puck.fromList(data);
+    c += bluePlayer.fromList(data.skip(c).toList());
+    c += redPlayer.fromList(data.skip(c).toList());
+    return c;
+  }
+
   void start() {
-    stopwatch = new Stopwatch();
+    init();
     stopwatch.start();
-    bluePlayer = new PlayerPuck(50.0, 50.0, field.width / 2, field.height * 3 / 4);
-
-    puck = new Puck(30.0, 30.0, field.width / 2, field.height / 2);
-    puck.spin = 2 * math.PI;
-
     processTick();
+  }
+
+  void init() {
+    stopwatch = new Stopwatch();
+    bluePlayer = new PlayerPuck(50.0, 50.0, field.width / 2, field.height * 3 / 4);
+    redPlayer = new PlayerPuck(50.0, 50.0, field.width / 2, field.height * 1 / 4);
+    puck = new Puck(30.0, 30.0, field.width / 2, field.height / 2);
+    puck.speedX = 10.0;
+    puck.spin = 2 * math.PI;
   }
 
   void setPlayerPosition(PlayerPuck player, double x, double y) {
@@ -38,6 +52,7 @@ class Engine {
 
     puck.process(elapsedTicks, this);
     bluePlayer.process(elapsedTicks, this);
+    redPlayer.process(elapsedTicks, this);
 
     Timer.run(processTick);
   }
@@ -100,6 +115,20 @@ class Puck {
     y = newY;
   }
 
+  String toString() => '$x $y $phi $speedX $speedY $spin $weight $size';
+
+  int fromList(List<double> data) {
+    x = data[0];
+    y = data[1];
+    phi = data[2];
+    speedX = data[3];
+    speedY = data[4];
+    spin = data[5];
+    weight = data[6];
+    size = data[7];
+    return 8;
+  }
+
   double x;
   double y;
   double phi = 0.0;
@@ -130,10 +159,19 @@ class Puck {
 class PlayerPuck extends Puck {
   PlayerPuck(double size, double weight, this.desiredX, this.desiredY) : super(size, weight, desiredX, desiredY);
 
+  String toString() => '${super.toString()} $desiredX $desiredY $actualSpeed';
+
+  int fromList(List<double> data) {
+    var c = super.fromList(data);
+    desiredX = data[c];
+    desiredY = data[c + 1];
+    actualSpeed = data[c + 2];
+    return c + 3;
+  }
+  
   double desiredX;
   double desiredY;
-  double actualSpeed;
-  bool collision = false;
+  double actualSpeed = 0.0;
 
   void process(int elapsedTicks, Engine engine) {
     desiredX = desiredX.clamp(engine.field.border + radius, engine.field.width - engine.field.border - radius);
@@ -144,12 +182,10 @@ class PlayerPuck extends Puck {
     var newX = x + speedX * elapsedTicks / engine.frame;
     var newY = y + speedY * elapsedTicks / engine.frame;
 
-    collision = false;
     var puck = engine.puck;
     var distance = math.sqrt((puck.x - newX) * (puck.x - newX) + (puck.y - newY) * (puck.y - newY));
     if (distance < radius + puck.radius) {
-      collision = true;
-      var newPuckSpeed = engine.friction * (puck.speed) + actualSpeed ;
+      var newPuckSpeed = 10 * engine.friction * (puck.speed) + actualSpeed ;
       var sx = puck.x - newX;
       var sy = puck.y - newY;
       var s = math.sqrt(sx * sx + sy * sy);
@@ -161,7 +197,7 @@ class PlayerPuck extends Puck {
 
       if (actualSpeed > 0) {
         var angle = this.angle - puck.angle;
-        puck.spin = angle * actualSpeed * elapsedTicks / engine.frame;
+        puck.spin = 100 * angle * actualSpeed * elapsedTicks / engine.frame;
       }
 
       var vx = newX - puck.x;

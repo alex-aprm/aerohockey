@@ -8,6 +8,8 @@ dependencies:
   uuid: any
   postgresql2: any
   shelf: any
+  shelf_web_socket: any
+  web_socket_channel: any
   shelf_bind: any
   shelf_rest: any
   logging: any
