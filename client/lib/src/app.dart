@@ -134,6 +134,10 @@ class Application {
     ctx.fillRect(0,0, engine.field.width, engine.field.height);
     ctx.setFillColorRgb(240, 240, 240);
     ctx.fillRect(engine.field.border, engine.field.border, engine.field.width - 2 * engine.field.border, engine.field.height - 2 * engine.field.border);
+
+    ctx.fillRect(engine.field.width / 2 - engine.field.gateWidth / 2, 0, engine.field.gateWidth, engine.field.border);
+    ctx.fillRect(engine.field.width / 2 - engine.field.gateWidth / 2, engine.field.height - engine.field.border, engine.field.gateWidth, engine.field.border);
+
     ctx.setFillColorRgb(0, 255, 0);
     ctx.beginPath();
     ctx.ellipse(engine.puck.x, engine.puck.y, engine.puck.radius, engine.puck.radius, 0, 0, 2 * math.PI, false);

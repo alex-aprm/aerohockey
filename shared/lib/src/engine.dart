@@ -1,7 +1,14 @@
 part of shared;
 
+typedef void OnGoal();
+
 class Engine {
   double friction = 0.001;
+
+  OnGoal onBlueGoal;
+  OnGoal onRedGoal;
+
+  int goalTime;
 
   double frame = 1000000.0;
 
@@ -29,6 +36,10 @@ class Engine {
     processTick();
   }
 
+  void goal() {
+    goalTime = stopwatch.elapsedMicroseconds;
+  }
+
   void init() {
     stopwatch = new Stopwatch();
     bluePlayer = new PlayerPuck(50.0, 50.0, field.width / 2, field.height * 3 / 4);
@@ -54,12 +65,23 @@ class Engine {
     bluePlayer.process(elapsedTicks, this);
     redPlayer.process(elapsedTicks, this);
 
+    if (goalTime != null && elapsedTotal - goalTime > 2000000) {
+      goalTime = null;
+      puck.x = field.width / 2;
+      puck.y = field.height /2;
+      puck.speedY = 0.0;
+      puck.speedX = 0.0;
+    }
+
     Timer.run(processTick);
   }
 }
 
 class Puck {
+
   void process(int elapsedTicks, Engine engine) {
+    if (engine.goalTime != null)
+      return;
     var field = engine.field;
     double newX = x + speedX * elapsedTicks / engine.frame;
     double newY = y + speedY * elapsedTicks / engine.frame;
@@ -86,17 +108,59 @@ class Puck {
 
     if (speedY < 0) {
       if (newY - radius <= field.border) {
-        newY += 2 * (field.border - (newY - radius));
-        speedY = -speedY;
-        speedX -= speed * spin * elapsedTicks / engine.frame;
+        var cornerX = field.width / 2 - field.gateWidth / 2;
+        if (newX < cornerX || newX > field.width - cornerX) {
+          newY += 2 * (field.border - (newY - radius));
+          speedY = -speedY;
+          speedX -= speed * spin * elapsedTicks / engine.frame;
+        }  else {
+          if (newX - radius < cornerX) {
+            var x = speed * (newX - cornerX) / radius;
+            var y = math.sqrt(speed*speed - x*x);
+            speedX = x;
+            speedY = y;
+          } else if (newX + radius> field.width - cornerX) {
+            var x = speed * (newX - field.width + cornerX) / radius;
+            var y = math.sqrt(speed * speed - x * x);
+            speedX = x;
+            speedY = y;
+          } else {
+            if (newY + radius < 0) {
+              engine.goal();
+              if (engine.onRedGoal != null)
+                engine.onRedGoal();
+            }
+          }
+        }
       }
     }
 
     if (speedY > 0) {
       if (newY + radius >= field.height - field.border) {
-        newY -= 2 * ((newY + radius) - (field.height - field.border));
-        speedY = -speedY;
-        speedX += speed * spin * elapsedTicks / engine.frame;
+        var cornerX = field.width / 2 - field.gateWidth / 2;
+        if (newX < cornerX || newX > field.width - cornerX) {
+          newY -= 2 * ((newY + radius) - (field.height - field.border));
+          speedY = -speedY;
+          speedX += speed * spin * elapsedTicks / engine.frame;
+        } else {
+          if (newX - radius < cornerX) {
+            var x = speed * (newX - cornerX) / radius;
+            var y = math.sqrt(speed*speed - x*x);
+            speedX = x;
+            speedY = -y;
+          } else if (newX + radius> field.width - cornerX) {
+            var x = speed * (newX - field.width + cornerX) / radius;
+            var y = math.sqrt(speed * speed - x * x);
+            speedX = x;
+            speedY = -y;
+          } else {
+            if (newY - radius > field.height) {
+              engine.goal();
+              if (engine.onBlueGoal != null)
+                engine.onBlueGoal();
+            }
+          }
+        }
       }
     }
 
