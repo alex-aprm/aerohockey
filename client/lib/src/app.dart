@@ -5,6 +5,9 @@ class Application {
   Application() {
     api.getClient = () => new BrowserClient();
     api.root = 'http://localhost:8084';
+    var uri = Uri.base;
+    if (uri.host != 'localhost')
+      api.root = uri.replace(path: 'api').toString();
   }
 
   CanvasElement field;
@@ -19,7 +22,22 @@ class Application {
     document.body.children.clear();
 
     document.body.append(getNameDiv());
-    await createSocket();
+    document.body.append(getStartGameDiv());
+
+/*
+    await startGame();
+    field.onMouseMove.listen((me) async {
+      var x = me.client.x * engine.field.width / field.clientWidth;
+      var y = me.client.y * engine.field.height / field.clientHeight;
+      engine.setPlayerPosition(engine.bluePlayer, x, y);
+    });
+    document.body.append(new ButtonElement()..text = 'test'..onClick.listen((_) {
+        engine.puck.speedX = 0.0;
+        engine.puck.speedY = -200.0;
+        engine.puck.x = engine.field.width - 110.0;
+        engine.puck.y =  100.0;
+      }));*/
+    //await createSocket();
   }
 
   Future createSocket() async {
@@ -68,18 +86,22 @@ class Application {
     ws.onMessage.listen((MessageEvent e) async {
       if (e.data is String) {
         if (e.data.startsWith('game')) {
-          var color = e.data.substring(5);
-          print(color);
-          t.cancel();
-          await startGame();
-          field.onMouseMove.listen((me) async {
-            var x = me.client.x * engine.field.width / field.clientWidth;
-            var y = me.client.y * engine.field.height / field.clientHeight;
-            engine.setPlayerPosition(
-                color == 'blue' ? engine.bluePlayer : engine.redPlayer, x, y);
-            var s = 'player $x $y';
-            ws.send(s);
-          });
+          if (engine == null) {
+            var color = e.data.substring(5);
+            print(color);
+            t.cancel();
+            await startGame();
+            field.onMouseMove.listen((me) async {
+              var x = me.client.x * engine.field.width / field.clientWidth;
+              var y = me.client.y * engine.field.height / field.clientHeight;
+              engine.setPlayerPosition(
+                  color == 'blue' ? engine.bluePlayer : engine.redPlayer, x, y);
+              var s = 'player $x $y';
+              ws.send(s);
+            });
+          } else {
+            //get scores
+          }
         } else if (e.data.startsWith('engine')) {
            engine.fromString(e.data.substring(7));
         }
@@ -87,6 +109,17 @@ class Application {
     });
   }
 
+  DivElement getStartGameDiv() {
+    var gameDiv =  new DivElement();
+    var startLink = new AnchorElement()..href = '#'..text = 'начать игру';
+    startLink.onClick.listen((e) {
+      e.preventDefault();
+      createSocket();
+      gameDiv.children.clear();
+      gameDiv.append(new HeadingElement.h3()..text = 'Ждём соперника');
+    });
+    return gameDiv;
+  }
   DivElement getNameDiv() {
     var playerDiv = new DivElement();
     var playerNameH = new HeadingElement.h1()..text = currentPlayer.name;

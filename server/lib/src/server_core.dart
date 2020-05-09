@@ -40,18 +40,10 @@ class Server {
   }
 
   void initRoutes(Router route) {
-
     route.get('/players/current', getCurrentPlayer);
     route.post('/players/current', postCurrentPlayer);
 
     route.get('/game/stream', webSocketHandler(gameSocket));
-//    route.get('/game/queue', getGameQueue);
-//    route.post('/game/queue', postGameQueue);
-
-/*    route.get('/game', getCurrentGame);
-    route.get('/game/{id}', getGame);
-    route.get('/games', getGames);
-*/
   }
 
   Future<Player> postCurrentPlayer(Player player) async {
@@ -74,6 +66,8 @@ class Server {
   List<Game> waitingGames = [];
   List<Game> playingGames = [];
 
+  int gamesMax = 4;
+
   Future dispatchGames(Timer timer) async {
     for (var id in playerActivity.keys.toList()) {
       if (!playingGames.any((g) => id == g.blueSide.id || id == g.redSide.id) &&
@@ -90,15 +84,43 @@ class Server {
       }
     }
     for(var g in waitingGames.toList()) {
-      if (g.blueSide != null && g.redSide != null) {
+      if (g.blueSide != null && g.redSide != null && playingGames.length < gamesMax) {
         waitingGames.remove(g);
         playingGames.add(g);
+        g.started = new DateTime.now();
         var engine = new Engine();
+        void checkGameEnd() {
+          if (g.blueScore == 7 || g.redScore == 7) {
+            engines.remove(g.id);
+            engine = null;
+            playerConnections[g.blueSide.id].sink.add('game over');
+            playerConnections[g.redSide.id].sink.add('game over');
+            playingGames.remove(g);
+            playerGames.remove(g.blueSide.id);
+            playerGames.remove(g.redSide.id);
+          }
+        };
+        engine.onBlueGoal = () {
+          g.redScore++;
+          checkGameEnd();
+          var score = '${g.blueScore} : ${g.redScore}';
+          playerConnections[g.blueSide.id].sink.add(score);
+          playerConnections[g.redSide.id].sink.add(score);
+        };
+        engine.onRedGoal = () {
+          g.blueScore++;
+          checkGameEnd();
+          var score = '${g.blueScore} : ${g.redScore}';
+          playerConnections[g.blueSide.id].sink.add(score);
+        };
         engines[g.id] = engine;
         engine.start();
         playerConnections[g.blueSide.id].sink.add('game blue');
         playerConnections[g.redSide.id].sink.add('game red');
-        new Timer.periodic(new Duration(milliseconds: 10), (_) {
+        Timer timer;
+        timer = new Timer.periodic(new Duration(milliseconds: 10), (_) {
+          if (engine == null)
+            timer.cancel();
           var s = engine.toString();
           if (g.blueSide != null)
             playerConnections[g.blueSide.id].sink.add('engine $s');
