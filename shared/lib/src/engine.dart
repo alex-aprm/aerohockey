@@ -30,7 +30,7 @@ class Engine {
     if (lastLoadedTick > data[0])
       return 0;
     lastLoadedTick = data[0];
-    var c = puck.fromList(data.skip(1)) + 1;
+    var c = puck.fromList(data.skip(1).toList()) + 1;
     c += bluePlayer.fromList(data.skip(c).toList());
     c += redPlayer.fromList(data.skip(c).toList());
     return c;

@@ -5,7 +5,7 @@ import 'package:server/server.dart';
 Future main(List<String> args) async {
   if (args.isNotEmpty) {
     if (args[0] == 'start') {
-      await Process.start('dart', ['start_server.dart']);
+      await Process.start('./dart', ['start_server.dart']);
       exit(0);
     }
   }
