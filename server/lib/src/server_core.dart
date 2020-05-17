@@ -33,6 +33,7 @@ class Server {
     initRoutes(route);
 
     var handler = const shelf.Pipeline()
+        .addMiddleware(ExceptionHandler())
         .addMiddleware(createCorsMiddleware())
         .addMiddleware(authorize)
         .addHandler(route.handler);
@@ -76,11 +77,14 @@ class Server {
         playerConnections.remove(id);
         playerActivity.remove(id);
         var game = playerGames[id];
-        playerGames.remove(id);
-        var otherPlayer = game.blueSide.id == id ? game.redSide : game.blueSide;
-        game.blueSide = otherPlayer;
-        game.redSide = null;
-        await queuePlayer(otherPlayer, alreadyWasQueued: true);
+        if (game != null) {
+          playerGames.remove(id);
+          var otherPlayer = game.blueSide.id == id ? game.redSide : game
+              .blueSide;
+          game.blueSide = otherPlayer;
+          game.redSide = null;
+          await queuePlayer(otherPlayer, alreadyWasQueued: true);
+        }
       }
     }
     for(var g in waitingGames.toList()) {
@@ -89,36 +93,48 @@ class Server {
         playingGames.add(g);
         g.started = new DateTime.now();
         var engine = new Engine();
+        Timer timer;
         void checkGameEnd() {
-          if (g.blueScore == 7 || g.redScore == 7) {
-            engines.remove(g.id);
-            engine = null;
+          if (g.blueScore == 7 || g.redScore == 7 || engine.stopwatch.elapsed.inSeconds > 120) {
             playerConnections[g.blueSide.id].sink.add('game over');
             playerConnections[g.redSide.id].sink.add('game over');
+            timer.cancel();
+            engine.stop();
+            engines.remove(g.id);
+            engine = null;
             playingGames.remove(g);
             playerGames.remove(g.blueSide.id);
             playerGames.remove(g.redSide.id);
+            db.run((db) => db.games.save(g));
           }
         };
-        engine.onBlueGoal = () {
-          g.redScore++;
-          checkGameEnd();
-          var score = '${g.blueScore} : ${g.redScore}';
+
+        void sendScore() {
+          var score = 'score ${g.blueSide.name} : ${g.redSide.name} - ${g.blueScore} : ${g.redScore}';
           playerConnections[g.blueSide.id].sink.add(score);
           playerConnections[g.redSide.id].sink.add(score);
+        }
+
+        engine.onBlueGoal = () {
+          g.redScore++;
+          sendScore();
+          checkGameEnd();
         };
         engine.onRedGoal = () {
           g.blueScore++;
+          sendScore();
           checkGameEnd();
-          var score = '${g.blueScore} : ${g.redScore}';
-          playerConnections[g.blueSide.id].sink.add(score);
         };
+        engine.onGameSecond = () {
+          checkGameEnd();
+        };
+
         engines[g.id] = engine;
         engine.start();
         playerConnections[g.blueSide.id].sink.add('game blue');
         playerConnections[g.redSide.id].sink.add('game red');
-        Timer timer;
-        timer = new Timer.periodic(new Duration(milliseconds: 10), (_) {
+        sendScore();
+        timer = new Timer.periodic(new Duration(milliseconds: 50), (_) {
           if (engine == null)
             timer.cancel();
           var s = engine.toString();
@@ -148,10 +164,15 @@ class Server {
           socket.sink.add('OK');
         } else if (msg.startsWith('player')) {
           var game = playerGames[session.player.id];
-          var engine = engines[game.id];
-          var data = msg.split(' ');
-          engine.setPlayerPosition(session.player.id ==  game.blueSide.id ? engine.bluePlayer : engine.redPlayer, double.parse(data[1]), double.parse(data[2]));
-          playerActivity[session.player.id] = new DateTime.now();
+          if (game != null) {
+            var engine = engines[game.id];
+            var data = msg.split(' ');
+            engine.setPlayerPosition(session.player.id == game.blueSide.id
+                ? engine.bluePlayer
+                : engine.redPlayer, double.parse(data[1]),
+                double.parse(data[2]));
+            playerActivity[session.player.id] = new DateTime.now();
+          }
         }
       }
     });
@@ -258,6 +279,28 @@ class Server {
   };
 
 }
+
+shelf.Middleware ExceptionHandler() =>
+        (shelf.Handler handler) =>
+        (shelf.Request request) =>
+        runZoned(() => new Future.sync(() => handler(request))
+            .then((shelf.Response response) async {
+          return response;
+        }).catchError((x, stackTrace) {
+          if (x is! shelf.HijackException) {
+            print(x.toString());
+            print(stackTrace.toString());
+            return new shelf.Response(500,
+                body: x.toString());
+          } else
+            throw x;
+        }), onError: (x, stack) {
+          //if async code throws exception after response
+          if (x is! shelf.HijackException) {
+            print(x);
+            print(stack);
+          }
+        });
 
 class Context {
   Context(this.session);

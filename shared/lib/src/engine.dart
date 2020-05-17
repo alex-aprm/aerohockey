@@ -7,6 +7,7 @@ class Engine {
 
   OnGoal onBlueGoal;
   OnGoal onRedGoal;
+  OnGoal onGameSecond;
 
   int goalTime;
 
@@ -14,6 +15,7 @@ class Engine {
 
   Stopwatch stopwatch;
   int lastProcessedTick = 0;
+  int gameSecondElapsed = 0;
 
   PlayerPuck redPlayer;
   PlayerPuck bluePlayer;
@@ -34,6 +36,10 @@ class Engine {
     init();
     stopwatch.start();
     processTick();
+  }
+
+  void stop() {
+    stopwatch = null;
   }
 
   void goal() {
@@ -59,7 +65,14 @@ class Engine {
 
     var elapsedTotal = stopwatch.elapsedMicroseconds;
     var elapsedTicks = elapsedTotal - lastProcessedTick;
+    gameSecondElapsed += elapsedTicks;
     lastProcessedTick = elapsedTotal;
+
+    if (gameSecondElapsed > 1e6) {
+      if (onGameSecond != null)
+        onGameSecond();
+      gameSecondElapsed = 0;
+    }
 
     puck.process(elapsedTicks, this);
     bluePlayer.process(elapsedTicks, this);

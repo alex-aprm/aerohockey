@@ -12,6 +12,8 @@ class Application {
 
   CanvasElement field;
 
+  SpanElement scoreSpan;
+
   Player currentPlayer;
 
   Future init() async {
@@ -83,25 +85,38 @@ class Application {
 
     var t = new Timer.periodic(new Duration(seconds: 5), (_) => send('queue'));
 
+    StreamSubscription fieldMouseMove;
     ws.onMessage.listen((MessageEvent e) async {
       if (e.data is String) {
         if (e.data.startsWith('game')) {
+          var color = e.data.substring(5);
           if (engine == null) {
-            var color = e.data.substring(5);
-            print(color);
             t.cancel();
             await startGame();
-            field.onMouseMove.listen((me) async {
+            fieldMouseMove = field.onMouseMove.listen((me) async {
               var x = me.client.x * engine.field.width / field.clientWidth;
               var y = me.client.y * engine.field.height / field.clientHeight;
               engine.setPlayerPosition(
-                  color == 'blue' ? engine.bluePlayer : engine.redPlayer, x, y);
+                  color == 'blue' ? engine.bluePlayer : engine.redPlayer, x,
+                  y);
               var s = 'player $x $y';
               ws.send(s);
             });
           } else {
-            //get scores
+            if (color == 'over') {
+              print(color);
+              stopGame();
+              if (fieldMouseMove != null)
+                fieldMouseMove.cancel();
+              document.body.children.clear();
+              document.body.append(getNameDiv());
+              document.body.append(getStartGameDiv());
+              onCloseSub.cancel();
+              ws.close();
+            }
           }
+        } else if (e.data.startsWith('score')) {
+          scoreSpan.text = e.data.substring(6);
         } else if (e.data.startsWith('engine')) {
            engine.fromString(e.data.substring(7));
         }
@@ -118,8 +133,10 @@ class Application {
       gameDiv.children.clear();
       gameDiv.append(new HeadingElement.h3()..text = 'Ждём соперника');
     });
+    gameDiv.append(startLink);
     return gameDiv;
   }
+
   DivElement getNameDiv() {
     var playerDiv = new DivElement();
     var playerNameH = new HeadingElement.h1()..text = currentPlayer.name;
@@ -151,14 +168,24 @@ class Application {
 
   Engine engine;
 
+  Timer timer;
+
   Future startGame() async {
     document.body.children.clear();
     engine = new Engine();
     engine.start();
     field = new CanvasElement(width: engine.field.width.round(), height: engine.field.height.round());
+    scoreSpan = new SpanElement();
     field.style.cursor = 'none';
+    document.body.append(new DivElement()..append(scoreSpan));
     document.body.append(field);
-    new Timer.periodic(new Duration(milliseconds: 10), (_) => drawField(engine));
+    timer = new Timer.periodic(new Duration(milliseconds: 10), (_) => drawField(engine));
+  }
+
+  void stopGame() {
+    timer.cancel();
+    engine.stop();
+    engine = null;
   }
 
   Future drawField(Engine engine) async {
