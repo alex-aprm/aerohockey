@@ -16,17 +16,21 @@ class Engine {
   Stopwatch stopwatch;
   int lastProcessedTick = 0;
   int gameSecondElapsed = 0;
+  int lastLoadedTick = 0;
 
   PlayerPuck redPlayer;
   PlayerPuck bluePlayer;
   Puck puck;
   Field field = new Field();
 
-  String toString() => '${puck.toString()} ${bluePlayer.toString()} ${redPlayer.toString()}';
+  String toString() => '$lastProcessedTick ${puck.toString()} ${bluePlayer.toString()} ${redPlayer.toString()}';
 
   int fromString(String s) {
     var data = s.split(' ').map((c) => double.parse(c)).toList();
-    var c = puck.fromList(data);
+    if (lastLoadedTick > data[0])
+      return 0;
+    lastLoadedTick = data[0];
+    var c = puck.fromList(data.skip(1)) + 1;
     c += bluePlayer.fromList(data.skip(c).toList());
     c += redPlayer.fromList(data.skip(c).toList());
     return c;
