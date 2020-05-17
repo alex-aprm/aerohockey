@@ -96,9 +96,11 @@ class Application {
             fieldMouseMove = field.onMouseMove.listen((me) async {
               var x = me.client.x * engine.field.width / field.clientWidth;
               var y = me.client.y * engine.field.height / field.clientHeight;
+/*
               engine.setPlayerPosition(
                   color == 'blue' ? engine.bluePlayer : engine.redPlayer, x,
                   y);
+*/
               var s = 'player $x $y';
               ws.send(s);
             });
