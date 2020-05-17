@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:convert';
 import 'package:uuid/uuid.dart';
+import 'dart:typed_data';
 
 part 'src/model.dart';
 part 'src/game.dart';

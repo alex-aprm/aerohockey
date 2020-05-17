@@ -122,6 +122,12 @@ class Application {
         } else if (e.data.startsWith('engine')) {
            engine.fromString(e.data.substring(7));
         }
+      } else {
+       var reader = new FileReader();
+       reader.readAsArrayBuffer(e.data);
+       reader.onLoad.listen((_) async {
+         engine.fromBytes(new Uint8List.fromList(reader.result));
+       });
       }
     });
   }

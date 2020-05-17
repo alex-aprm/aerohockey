@@ -134,14 +134,14 @@ class Server {
         playerConnections[g.blueSide.id].sink.add('game blue');
         playerConnections[g.redSide.id].sink.add('game red');
         sendScore();
-        timer = new Timer.periodic(new Duration(milliseconds: 50), (_) {
+        timer = new Timer.periodic(new Duration(milliseconds: 10), (_) {
           if (engine == null)
             timer.cancel();
-          var s = engine.toString();
+          var s = engine.toBytes();
           if (g.blueSide != null)
-            playerConnections[g.blueSide.id].sink.add('engine $s');
+            playerConnections[g.blueSide.id].sink.add(s);
           if (g.redSide != null)
-            playerConnections[g.redSide.id].sink.add('engine $s');
+            playerConnections[g.redSide.id].sink.add(s);
         });
       }
     }

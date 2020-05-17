@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:shared/shared.dart';
 
@@ -22,11 +23,20 @@ void main() {
     print(s);
   });
 
-  test('engine serialization test' , () {
-   var engine = new Engine();
-   engine.init();
-   var s = engine.toString();
-   engine.fromString(s);
+  test('engine serialization test 1' , () {
+    var engine = new Engine();
+    engine.init();
+    var s = engine.toString();
+    engine.fromString(s);
+  });
+
+  test('engine serialization test 2' , () {
+    var engine = new Engine();
+    engine.init();
+    print(engine);
+    var s = engine.toBytes();
+    engine.fromBytes(s);
+    print(engine);
   });
 
 }

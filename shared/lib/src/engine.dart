@@ -25,6 +25,33 @@ class Engine {
 
   String toString() => '$lastProcessedTick ${puck.toString()} ${bluePlayer.toString()} ${redPlayer.toString()}';
 
+  Uint8List toBytes() {
+    var buf = new Uint8List(8 + 64 + 88 + 88);
+    var view = new ByteData.view(buf.buffer);
+    view.setFloat64(0, lastProcessedTick.toDouble());
+    int i = 8;
+    for(var b in puck.toBytes())
+      buf[i++] = b;
+    for(var b in bluePlayer.toBytes())
+      buf[i++] = b;
+    for(var b in redPlayer.toBytes())
+      buf[i++] = b;
+
+    return buf;
+  }
+
+  void fromBytes(Uint8List bytes) {
+    var view = new ByteData.view(bytes.buffer);
+    List<double> data = [];
+    for(var i = 0; i < view.lengthInBytes / 8; i++) {
+      data.add(view.getFloat64(i*8));
+    }
+    lastLoadedTick = data[0].floor();
+    var c = puck.fromList(data.skip(1).toList()) + 1;
+    c += bluePlayer.fromList(data.skip(c).toList());
+    c += redPlayer.fromList(data.skip(c).toList());
+  }
+
   int fromString(String s) {
     var data = s.split(' ').map((c) => double.parse(c)).toList();
     if (lastLoadedTick > data[0])
@@ -196,6 +223,15 @@ class Puck {
     y = newY;
   }
 
+  Uint8List toBytes() {
+    var buf = new Uint8List(64);
+    var view = new ByteData.view(buf.buffer);
+    List<double> data = [x, y, phi, speedX, speedY, spin, weight, size];
+    for (var i = 0; i < data.length; i++)
+      view.setFloat64(8 * i, data[i]);
+    return buf;
+  }
+
   String toString() => '$x $y $phi $speedX $speedY $spin $weight $size';
 
   int fromList(List<double> data) {
@@ -242,6 +278,15 @@ class PlayerPuck extends Puck {
 
   String toString() => '${super.toString()} $desiredX $desiredY $actualSpeed';
 
+  Uint8List toBytes() {
+    var buf = new Uint8List(88);
+    var view = new ByteData.view(buf.buffer);
+    List<double> data = [x, y, phi, speedX, speedY, spin, weight, size, desiredX, desiredY, actualSpeed];
+    for (var i = 0; i < data.length; i++)
+      view.setFloat64(8 * i, data[i]);
+    return buf;
+  }
+
   int fromList(List<double> data) {
     var c = super.fromList(data);
     desiredX = data[c];
@@ -249,7 +294,7 @@ class PlayerPuck extends Puck {
     actualSpeed = data[c + 2];
     return c + 3;
   }
-  
+
   double desiredX;
   double desiredY;
   double actualSpeed = 0.0;
