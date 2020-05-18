@@ -131,16 +131,18 @@ class Server {
 
         engines[g.id] = engine;
         engine.start();
-        playerConnections[g.blueSide.id].sink.add('game blue');
+        if (playerConnections.containsKey(g.blueSide.id))
+          playerConnections[g.blueSide.id].sink.add('game blue');
+        if (playerConnections.containsKey(g.redSide.id))
         playerConnections[g.redSide.id].sink.add('game red');
         sendScore();
         timer = new Timer.periodic(new Duration(milliseconds: 10), (_) {
           if (engine == null)
             timer.cancel();
           var s = engine.toBytes();
-          if (g.blueSide != null)
+          if (g.blueSide != null && playerConnections.containsKey(g.blueSide.id))
             playerConnections[g.blueSide.id].sink.add(s);
-          if (g.redSide != null)
+          if (g.redSide != null && playerConnections.containsKey(g.redSide.id))
             playerConnections[g.redSide.id].sink.add(s);
         });
       }
