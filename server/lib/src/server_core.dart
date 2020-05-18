@@ -96,8 +96,10 @@ class Server {
         Timer timer;
         void checkGameEnd() {
           if (g.blueScore == 7 || g.redScore == 7 || engine.stopwatch.elapsed.inSeconds > 120) {
-            playerConnections[g.blueSide.id].sink.add('game over');
-            playerConnections[g.redSide.id].sink.add('game over');
+            if (playerConnections.containsKey(g.blueSide.id))
+              playerConnections[g.blueSide.id].sink.add('game over');
+            if (playerConnections.containsKey(g.redSide.id))
+              playerConnections[g.redSide.id].sink.add('game over');
             timer.cancel();
             engine.stop();
             engines.remove(g.id);
@@ -111,8 +113,10 @@ class Server {
 
         void sendScore() {
           var score = 'score ${g.blueSide.name} : ${g.redSide.name} - ${g.blueScore} : ${g.redScore}';
-          playerConnections[g.blueSide.id].sink.add(score);
-          playerConnections[g.redSide.id].sink.add(score);
+          if (playerConnections.containsKey(g.blueSide.id))
+            playerConnections[g.blueSide.id].sink.add(score);
+          if (playerConnections.containsKey(g.redSide.id))
+            playerConnections[g.redSide.id].sink.add(score);
         }
 
         engine.onBlueGoal = () {
